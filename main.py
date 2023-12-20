@@ -1,10 +1,9 @@
 from dust.dust_dataset import DustDataset
+from pathlib import Path
+import numpy as np
+import os
 
-
-def main():
-    from pathlib import Path
-    import numpy as np
-
+def test_dust():
     data_path = Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20')
     dust_dataset = DustDataset(dataset_dir=data_path)
     dust_dataset
@@ -20,7 +19,7 @@ def main():
     check_id = 7
     
     # dust_dataset.get_anchor_size(Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20\annotation\kitti_imagecamera'))
-    # dust_dataset.convert_pcd_to_bin(data_ids[check_id])
+    dust_dataset.convert_pcd_to_bin(data_ids[check_id])
     # lidar_a = dust_dataset.get_lidar_by_idx(data_ids[check_id])
     # lidar_b = dust_dataset.get_lidar_bin_by_idx(data_ids[check_id])
     # dust_dataset.visualize_point_cloud_by_idx(data_ids[check_id])
@@ -33,7 +32,7 @@ def main():
     rotate_angle = 56
     # dust_dataset.visualize_point_cloud_by_idx_and_angle(data_ids[check_id], rotate_angle)
     # dust_dataset.visualize_point_cloud_by_idx_and_angle_and_filter(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
-    dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
+    # dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     # dust_dataset.visualize_rotate_and_filter_point_cloud_in_image(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     
     point_cloud_range = np.array([5, -6.4, -4, 53.8, 0.8, 0])
@@ -47,6 +46,25 @@ def main():
     # dust_dataset.visualize_filter_point_cloud_in_fov(data_ids[check_id], x_range, y_range, z_range)
     # dust_dataset.visualize_filter_point_cloud_in_image(data_ids[check_id], x_range, y_range, z_range)
     
+def convert_kitti(data_path):
+    dust_dataset = DustDataset(dataset_dir=data_path)
+    file_list = os.listdir(dust_dataset.lidar_dir)
+    for file in file_list:
+        file_split = os.path.splitext(file)
+        file_type = file_split[1]
+        if (file_type != '.pcd'):
+            continue
+        
+        file_name = file_split[0]
+        bin_file = file_name + '.bin'
+        if (bin_file in file_list):
+            continue
+        
+        dust_dataset.convert_pcd_to_bin(file_name)
+
+def main():
+    # test_dust()
+    convert_kitti(Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20'))
 
 if __name__=='__main__':
     main()
