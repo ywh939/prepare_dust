@@ -57,6 +57,8 @@ def test_dust():
 def convert_kitti(data_path):
     if (data_path == ""):
         return
+    
+    data_path = Path(data_path)
     print(f"the path of datasets to convert pcd to bin: {data_path}")
     
     dust_dataset = DustDataset(dataset_dir=data_path)
@@ -78,7 +80,7 @@ def main():
     args = parse_config()
     
     # test_dust()
-    convert_kitti(Path(args.convert_datasets_path))
+    convert_kitti(args.convert_datasets_path)
 
 if __name__=='__main__':
     main()
