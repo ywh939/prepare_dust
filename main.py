@@ -2,7 +2,15 @@ from dust.dust_dataset import DustDataset
 from pathlib import Path
 import numpy as np
 import os
+import argparse
 
+def parse_config():
+    parser = argparse.ArgumentParser(description='arg parser')
+    parser.add_argument('--convert_datasets_path', type=str, default="", help='specify the datasets path to convert pcd to bin')
+    args = parser.parse_args()
+    
+    return args
+    
 def test_dust():
     data_path = Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20')
     dust_dataset = DustDataset(dataset_dir=data_path)
@@ -47,6 +55,10 @@ def test_dust():
     # dust_dataset.visualize_filter_point_cloud_in_image(data_ids[check_id], x_range, y_range, z_range)
     
 def convert_kitti(data_path):
+    if (data_path == ""):
+        return
+    print(f"the path of datasets to convert pcd to bin: {data_path}")
+    
     dust_dataset = DustDataset(dataset_dir=data_path)
     file_list = os.listdir(dust_dataset.lidar_dir)
     for file in file_list:
@@ -63,8 +75,10 @@ def convert_kitti(data_path):
         dust_dataset.convert_pcd_to_bin(file_name)
 
 def main():
+    args = parse_config()
+    
     # test_dust()
-    convert_kitti(Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20'))
+    convert_kitti(Path(args.convert_datasets_path))
 
 if __name__=='__main__':
     main()
