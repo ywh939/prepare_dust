@@ -1,8 +1,10 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e
 
 raw_dataset_path=$1
 module_root_path=$2
-echo 'raw dataset: $raw_dataset_path, module: $module_root_path'
+echo "raw dataset: $raw_dataset_path, module: $module_root_path"
 
 cd module_root_path
 cd data
