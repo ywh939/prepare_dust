@@ -1,6 +1,6 @@
 from pathlib import Path
 import numpy as np
-import cv2
+import os
 
 from dust.utils import dust_util as dust_util
 from dust import dust_label
@@ -121,8 +121,7 @@ class DustDataset(object):
         
         return anchor_size
                     
-    def check_box_outside_range(self, label_path, limit_range, rotate_angle):
-        import os
+    def check_box_outside_range(self, logger, label_path, limit_range, rotate_angle):
         from collections import defaultdict
         
         label_list = os.listdir(label_path)
@@ -131,20 +130,20 @@ class DustDataset(object):
         corner_cnt = np.zeros(8).reshape(8, 1)
         corner_name_cnt = defaultdict(list)
         check_label = []
-        xyz_name = ['x', 'y', 'z']
         all_invalid_corners = None
         all_corners = None
         
         for label_name in label_list:
-            
             objs = self.get_label_objects_by_path(label_path / label_name)
             objs_num = len(objs)
-            if objs_num == 0 or objs_num > 1:
-                pass
+            if objs_num == 0:
+                logger.error(f'invalid objects num: {objs_num}')
+                continue
             
             for obj in objs:
                 if obj.type != 'Car':
-                    pass
+                    logger.error(f'label {label_name}, Not Car: {obj.type}')
+                    continue
                 
                 if obj.type == 'Car':
                     if (obj.lwh <= 0).all():
