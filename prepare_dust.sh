@@ -15,18 +15,19 @@ create_dust_dir() {
     mkdir dust
     cd dust
     mkdir calib
-    ln -s $raw_dataset_path/annotation/kitti_imagecamera ./label
-    ln -s $raw_dataset_path/pcd ./pcd
-    ln -s $raw_dataset_path/image_camera ./image
+    mkdir training
+    ln -s $raw_dataset_path/annotation/kitti_imagecamera ./training/label
+    ln -s $raw_dataset_path/pcd ./training/pcd
+    ln -s $raw_dataset_path/image_camera ./training/image
 }
 
 prepare_dust() {
     echo "start prepare dust"
     python main.py \
-        --save_log, \
-        --check_label, \
-        --convert_datasets, \
-        --set_split, \
+        --save_log \
+        --check_label \
+        --convert_datasets \
+        --set_split \
         --raw_dataset_path $raw_dataset_path \
         --module_root_path $module_root_path \
         --train_split_rate 0.7 \
