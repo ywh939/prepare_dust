@@ -7,11 +7,15 @@ from dust.utils import common_util
 from dust.utils import dust_util
 
 class PrepareDataset(object):
-    def __init__(self, logger, args, rotate_angle=0):
+    def __init__(self, logger, args):
         raw_dataset_path = Path(args.raw_dataset_path)
         assert raw_dataset_path.exists()
         module_root_path = Path(args.module_root_path)
         assert module_root_path.exists()
+        rotate_angle = args.pcd_rect_rotate_angle        
+        # the number 56 is the rotate angle of the lidar, that can rectify the x coordinate of
+        # lidar point cloud to the heading direction of the vehicle
+        assert rotate_angle != 0
         
         self.train_split_rate = args.train_split_rate
         

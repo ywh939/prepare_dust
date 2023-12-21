@@ -18,6 +18,7 @@ def parse_config():
     parser.add_argument('--raw_dataset_path', type=str, default="", help='specify the datasets path to convert pcd to bin')
     parser.add_argument('--module_root_path', type=str, default="", help='specify the module root path')
     parser.add_argument('--train_split_rate', type=float, default=0.7, help='the rate of split train datasets')
+    parser.add_argument('--pcd_rect_rotate_angle', type=int, default=0, help='the rotate angle to rect pcd to head')
     args = parser.parse_args()
     
     return args
@@ -85,9 +86,7 @@ def main():
     if (args.test_data):
         test_dust(logger)
     else:
-        # the number 56 is the rotate angle of the lidar, that can rectify the x coordinate of
-        # lidar point cloud to the heading direction of the vehicle
-        prepareDataset = PrepareDataset(logger, args, 56)
+        prepareDataset = PrepareDataset(logger, args)
         prepareDataset.process_raw_dataset(args)
 
 if __name__=='__main__':
