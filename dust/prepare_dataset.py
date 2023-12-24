@@ -29,6 +29,8 @@ class PrepareDataset(object):
         self.statistic_log_path = self.dust_dataset.label_dir.parent
         self.invalid_label_path = self.statistic_log_path / 'invalid_label.txt'
         
+        self.classes = ['Car']
+        
     def process_raw_dataset(self, args):
         if (args.check_label):
             self.check_label()
@@ -58,6 +60,11 @@ class PrepareDataset(object):
             for obj in objs:
                 if obj.l <= 0 or obj.w <= 0 or obj.h <= 0:
                     self.logger.error(f"label {label_name}, object type {obj.type}, Invalid size: {obj.lwh}")
+                    invalid_label.append(os.path.splitext(label_name)[0])
+                    continue
+                
+                if obj.type not in self.classes:
+                    self.logger.warning(f"label {label_name}, object type {obj.type}, not valid")
                     invalid_label.append(os.path.splitext(label_name)[0])
                     continue
                 

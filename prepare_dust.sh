@@ -12,10 +12,10 @@ create_dust_dir() {
     echo "create dust directory"
     cd $module_root_path
     cd data
-    mkdir dust
+    mkdir -p dust
     cd dust
-    mkdir calib
-    mkdir training
+    mkdir -p calib
+    mkdir -p training
     ln -s $raw_dataset_path/annotation/kitti_imagecamera ./training/label
     ln -s $raw_dataset_path/pcd ./training/pcd
     ln -s $raw_dataset_path/image_camera ./training/image
