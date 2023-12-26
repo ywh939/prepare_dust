@@ -30,6 +30,7 @@ class PrepareDataset(object):
         self.invalid_label_path = self.statistic_log_path / 'invalid_label.txt'
         
         self.classes = ['Car']
+        self.class_objs = {'Car':1}
         
     def process_raw_dataset(self, args):
         if (args.check_label):
@@ -45,29 +46,15 @@ class PrepareDataset(object):
         self.logger.info(f"start to check label: {self.dust_dataset.label_dir}")
         
         label_list = os.listdir(self.dust_dataset.label_dir)
-        obj_type = []
-        all_corners = None
-        invalid_label = []
+        invalid_label = self.check_invalid_label(label_list)
         
+        all_corners = None
+        obj_type = []
         for label_name in label_list:
-            objs = self.dust_dataset.get_label_objects_by_path(self.dust_dataset.label_dir / label_name)
-            objs_num = len(objs)
-            if objs_num == 0:
-                self.logger.error(f'invalid objects num: {objs_num}')
-                invalid_label.append(os.path.splitext(label_name)[0])
+            if os.path.splitext(label_name)[0] in invalid_label:
                 continue
-            
+            objs = self.dust_dataset.get_label_objects_by_path(self.dust_dataset.label_dir / label_name)
             for obj in objs:
-                if obj.l <= 0 or obj.w <= 0 or obj.h <= 0:
-                    self.logger.error(f"label {label_name}, object type {obj.type}, Invalid size: {obj.lwh}")
-                    invalid_label.append(os.path.splitext(label_name)[0])
-                    continue
-                
-                if obj.type not in self.classes:
-                    self.logger.warning(f"label {label_name}, object type {obj.type}, not valid")
-                    invalid_label.append(os.path.splitext(label_name)[0])
-                    continue
-                
                 if obj.type not in obj_type:
                     obj_type.append(obj.type)
                     
@@ -79,9 +66,43 @@ class PrepareDataset(object):
                     
         self.logger.info(f'object type: {obj_type}')
         
-        self.statistic_box_distribution(self.logger, all_corners)
+        self.statistic_box_distribution(all_corners, 'clean_data_box_dist')
         
         common_util.save_to_file_line_by_line(self.logger, invalid_label, self.invalid_label_path)
+        
+    def check_invalid_label(self, label_list):
+        invalid_label = []
+        
+        for label_name in label_list:
+            objs = self.dust_dataset.get_label_objects_by_path(self.dust_dataset.label_dir / label_name)
+            objs_num = len(objs)
+            if objs_num == 0:
+                self.logger.error(f'invalid objects num: {objs_num}')
+                invalid_label.append(os.path.splitext(label_name)[0])
+                continue
+            
+            class_objs_cnt = {}
+            for obj in objs:
+                if obj.is_invalid():
+                    self.logger.error(f"label {label_name}, object type {obj.type}, invalid: lwh={obj.lwh}, box2d={obj.box2d}")
+                    invalid_label.append(os.path.splitext(label_name)[0])
+                    break
+                
+                if obj.type not in self.classes:
+                    self.logger.warning(f"label {label_name}, object type {obj.type}, not valid")
+                    invalid_label.append(os.path.splitext(label_name)[0])
+                    break
+                
+                val = class_objs_cnt.get(obj.type, 0) + 1
+                class_objs_cnt[obj.type] = val
+            
+            for obj_type, objs_num in class_objs_cnt.items():
+                if objs_num > self.class_objs[obj_type]:
+                    self.logger.error(f"label {label_name}, object type {obj.type}, object num: {objs_num} is greater than limit: {self.class_objs[obj.type]}")
+                    invalid_label.append(os.path.splitext(label_name)[0])
+        
+        self.logger.info(f"invalid label count: {len(invalid_label)}")
+        return invalid_label
                     
     def get_rect_3dbox(self, obj):
         boxes = np.concatenate([obj.center, obj.lwh, np.asanyarray(obj.yaw_radian).reshape(-1)], axis=-1).reshape(1, -1)
@@ -89,12 +110,13 @@ class PrepareDataset(object):
         boxes[:, 6] = dust_util.rect_to_yaw(float(boxes[:, 6]), self.rotate_angle)
         return dust_util.boxes_to_corners_3d(boxes)
 
-    def statistic_box_distribution(self, logger, all_corners):
+    def statistic_box_distribution(self, all_corners, path_suffix):
         all_box_x = all_corners[:, :, 0].flatten().tolist()
         all_box_y = all_corners[:, :, 1].flatten().tolist()
         all_box_z = all_corners[:, :, 2].flatten().tolist()
         
-        save_path_root = self.statistic_log_path
+        save_path_root =  self.statistic_log_path / path_suffix
+        save_path_root.mkdir(parents=True, exist_ok=True)
         
         dust_util.draw_hist(data=all_box_x,
                             title=f'lidar box x coordinate distribution',
@@ -114,7 +136,7 @@ class PrepareDataset(object):
                             ylabel='count',
                             save_path=save_path_root / f'z_coordinate_distribution.png'
                             )
-        logger.info(f'save box distribution to {save_path_root}')
+        self.logger.info(f'save box distribution to {save_path_root}')
         
     def convert_kitti(self):
         self.logger.info(f"the path of datasets to convert pcd to bin: {self.raw_dataset_path}")
@@ -163,7 +185,10 @@ class PrepareDataset(object):
         from sklearn.model_selection import train_test_split
         train_list, val_list = train_test_split(valid_list, train_size=self.train_split_rate, random_state=42)
 
-        self.logger.info(f'total data: {len(data_list)}, valid data: {len(valid_list)}, split rate: {self.train_split_rate}, train data: {len(train_list)}, X_val: {len(val_list)}')
+        self.logger.info(f'total data: {len(data_list)}, valid data: {len(valid_list)}, split rate: {self.train_split_rate}, train data: {len(train_list)}, test data: {len(val_list)}')
+        
+        self.statistic_label_list_box_distribution(train_list, 'split_train_data_box_dist')
+        self.statistic_label_list_box_distribution(val_list, 'split_val_data_box_dist')
         
         save_split_path = self.module_root_path / 'data' / 'dust' / 'split'
         save_split_path.mkdir(parents=True, exist_ok=True)
@@ -173,4 +198,24 @@ class PrepareDataset(object):
         
         val_split_path = save_split_path / 'val.txt'
         common_util.save_to_file_line_by_line(self.logger, val_list, val_split_path)
-    
+        
+    def statistic_label_list_box_distribution(self, label_list, save_path_suffix):
+        all_corners = None
+        
+        for label_name in label_list:
+            objs = self.dust_dataset.get_label_objects_by_path((self.dust_dataset.label_dir / label_name).with_suffix('.txt'))
+            
+            for obj in objs:
+                corners = self.get_rect_3dbox(obj)
+                
+                # box_y = corners[:, :, 1].flatten().tolist()
+                # if any(elem > 2. for elem in box_y):
+                #     self.logger.error(f'label: {label_name}')
+                    
+                if all_corners is None:
+                    all_corners = corners
+                else:
+                    all_corners = np.concatenate((all_corners, corners), axis=1)
+                    
+        self.statistic_box_distribution(all_corners, save_path_suffix)
+        

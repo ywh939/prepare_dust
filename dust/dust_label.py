@@ -27,3 +27,6 @@ class Object3d(object):
         
         # extract yaw angle (around Y-axis in camera coordinates or around Z-axis in lidar coordinates)
         self.yaw_radian = data[14]
+        
+    def is_invalid(self):
+        return np.any(self.lwh == 0) or np.any(self.box2d == 0)
