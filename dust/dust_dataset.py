@@ -275,6 +275,19 @@ class DustDataset(object):
             yaw=rect_yaw,
             paint_color=paint_color
         )
+    
+    def draw_3d_bbox_in_rect_point_cloud_image_by_index(self, rotate_angle, x_range, y_range, z_range, boxes, paint_color=False):
+        lidar_id = boxes['id']
+
+        lidar = self.get_lidar_by_idx(lidar_id)
+        rotated_lidar = dust_util.rotate_lidar_along_z(lidar, rotate_angle)
+        filtered_lidar = dust_util.filter_point_cloud(rotated_lidar, x_range, y_range, z_range)
+
+        dust_util.visualize_3D_bbox_point_cloud_in_image(
+            pcd=filtered_lidar,
+            boxes= boxes['boxes'],
+            paint_color=paint_color
+        )
         
     def draw_3d_bbox_in_filter_point_cloud_by_index(self, idx, x_range, y_range, z_range, paint_color=False, line_color=(0, 1, 0)):
         lidar = self.get_lidar_by_idx(idx)

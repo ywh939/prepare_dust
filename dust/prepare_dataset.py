@@ -41,6 +41,9 @@ class PrepareDataset(object):
         
         if (args.set_split):
             self.set_split_datasest()
+
+        if (args.box_dist_statis):
+            self.statistic_all_box_distribution()
             
     def check_label(self):
         self.logger.info(f"start to check label: {self.dust_dataset.label_dir}")
@@ -106,11 +109,12 @@ class PrepareDataset(object):
                     
     def get_rect_3dbox(self, obj):
         boxes = np.concatenate([obj.center, obj.lwh, np.asanyarray(obj.yaw_radian).reshape(-1)], axis=-1).reshape(1, -1)
-        boxes[:, 0:3] = dust_util.rotate_lidar_along_z(boxes[:, 0:3], self.rotate_angle)
-        boxes[:, 6] = dust_util.rect_to_yaw(float(boxes[:, 6]), self.rotate_angle)
+        if (self.rotate_angle != 0):
+            boxes[:, 0:3] = dust_util.rotate_lidar_along_z(boxes[:, 0:3], self.rotate_angle)
+            boxes[:, 6] = dust_util.rect_to_yaw(float(boxes[:, 6]), self.rotate_angle)
         return dust_util.boxes_to_corners_3d(boxes)
 
-    def statistic_box_distribution(self, all_corners, path_suffix):
+    def statistic_box_distribution(self, all_corners, path_suffix, draw_flag=False, torch_save=False):
         all_box_x = all_corners[:, :, 0].flatten().tolist()
         all_box_y = all_corners[:, :, 1].flatten().tolist()
         all_box_z = all_corners[:, :, 2].flatten().tolist()
@@ -118,24 +122,32 @@ class PrepareDataset(object):
         save_path_root =  self.statistic_log_path / path_suffix
         save_path_root.mkdir(parents=True, exist_ok=True)
         
-        dust_util.draw_hist(data=all_box_x,
-                            title=f'lidar box x coordinate distribution',
-                            xlabel=f'x coordinate value',
-                            ylabel='count',
-                            save_path=save_path_root / f'x_coordinate_distribution.png'
-                            )
-        dust_util.draw_hist(data=all_box_y,
-                            title=f'lidar box y coordinate distribution',
-                            xlabel=f'y coordinate value',
-                            ylabel='count',
-                            save_path=save_path_root / f'y_coordinate_distribution.png'
-                            )
-        dust_util.draw_hist(data=all_box_z,
-                            title=f'lidar box z coordinate distribution',
-                            xlabel=f'z coordinate value',
-                            ylabel='count',
-                            save_path=save_path_root / f'z_coordinate_distribution.png'
-                            )
+        if (torch_save):
+            import torch
+            save_path = save_path_root / f'all_box_coor.pth'
+            torch.save(all_box_z, save_path)
+            # a = torch.load(save_path)
+
+        if (draw_flag):
+            dust_util.draw_hist(data=all_box_x,
+                                title=f'lidar box x coordinate distribution',
+                                xlabel=f'x coordinate value',
+                                ylabel='count',
+                                save_path=save_path_root / f'x_coordinate_distribution.png'
+                                )
+            dust_util.draw_hist(data=all_box_y,
+                                title=f'lidar box y coordinate distribution',
+                                xlabel=f'y coordinate value',
+                                ylabel='count',
+                                save_path=save_path_root / f'y_coordinate_distribution.png'
+                                )
+            dust_util.draw_hist(data=all_box_z,
+                                title=f'lidar box z coordinate distribution',
+                                xlabel=f'z coordinate value',
+                                ylabel='count',
+                                save_path=save_path_root / f'z_coordinate_distribution.png'
+                                )
+            
         self.logger.info(f'save box distribution to {save_path_root}')
         
     def convert_kitti(self):
@@ -199,7 +211,7 @@ class PrepareDataset(object):
         val_split_path = save_split_path / 'val.txt'
         common_util.save_to_file_line_by_line(self.logger, val_list, val_split_path)
         
-    def statistic_label_list_box_distribution(self, label_list, save_path_suffix):
+    def statistic_label_list_box_distribution(self, label_list, save_path_suffix, draw_flag=False, torch_save=False):
         all_corners = None
         
         for label_name in label_list:
@@ -217,5 +229,55 @@ class PrepareDataset(object):
                 else:
                     all_corners = np.concatenate((all_corners, corners), axis=1)
                     
-        self.statistic_box_distribution(all_corners, save_path_suffix)
+        self.statistic_box_distribution(all_corners, save_path_suffix, torch_save=True)
+    
+    def statistic_all_box_distribution(self):
+        self.logger.info(f'start count all box distribution: {self.raw_dataset_path}')
         
+        file_list = os.listdir(self.dust_dataset.lidar_dir)
+        bin_data_list = list(filter(lambda x: x.endswith('.bin'), file_list))
+        data_list = [s.replace('.bin', '') for s in bin_data_list]
+        invalid_label = self.get_invalid_label()
+        valid_list = common_util.delete_list_elem_obtain_other(data_list, invalid_label)
+        
+        if len(data_list) == 0:
+            self.logger.error('no bin files')
+            return
+        
+        self.statistic_label_list_box_distribution(valid_list, 'data_box_dist', torch_save=True)
+        
+    def draw_3d_bbox_in_pcd_image(self, args):
+        self.logger.info(f'start draw 3d bbox in pcd image: {self.raw_dataset_path}')
+
+        raw_data_root_path = self.module_root_path.parent / 'annos' / 'raw'
+        origin_data_root_path = self.module_root_path.parent / 'annos' / 'origin'
+        simfusion_data_root_path = self.module_root_path.parent / 'annos' / 'simfusion'
+
+        import torch
+        data_list = os.listdir(raw_data_root_path)
+        filter_id = ['1661512352_405903']
+        
+        for data_name in data_list:
+            raw_data_path = raw_data_root_path / data_name
+            origin_data_path = origin_data_root_path / data_name
+            simfusion_data_path = simfusion_data_root_path / data_name
+            
+            raw_data = torch.load(raw_data_path)
+            origin_data = torch.load(origin_data_path)
+            simfusion_data = torch.load(simfusion_data_path)
+        
+            data_id = data_name.replace('.pth', '')
+            if (data_id in filter_id):
+                continue
+
+            bbox = {}
+            bbox['id'] = data_id
+            bbox['boxes'] = [raw_data, origin_data, simfusion_data]
+            self.dust_dataset.draw_3d_bbox_in_rect_point_cloud_image_by_index(
+                rotate_angle=args.pcd_rect_rotate_angle,
+                x_range=(5, 53.8),
+                y_range=(-6.4, 0.8),
+                z_range=(-5, 0),
+                boxes=bbox
+            )
+            break

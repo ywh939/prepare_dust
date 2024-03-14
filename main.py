@@ -7,14 +7,18 @@ import datetime
 from dust.dust_dataset import DustDataset
 from dust.utils import common_util
 from dust.prepare_dataset import PrepareDataset
+from kitti.kitti_dataset import KittiDataset
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
     parser.add_argument('--save_log', action='store_true', default=False, help='whether to save log file')
     parser.add_argument('--test_data', action='store_true', default=False, help='test something for datasets')
+    parser.add_argument('--kitti', action='store_true', default=False, help='do work for kitti datasets')
+    parser.add_argument('--draw_bbox', action='store_true', default=False, help='draw bbox in pcd image')
     parser.add_argument('--check_label', action='store_true', default=False, help='whether to check label')
     parser.add_argument('--convert_datasets', action='store_true', default=False, help='convert datasets from pcd to bin')
     parser.add_argument('--set_split', action='store_true', default=False, help='set split sample to train and value')
+    parser.add_argument('--box_dist_statis', action='store_true', default=False, help='all box distribution statistic')
     parser.add_argument('--raw_dataset_path', type=str, default="", help='specify the datasets path to convert pcd to bin')
     parser.add_argument('--module_root_path', type=str, default="", help='specify the module root path')
     parser.add_argument('--train_split_rate', type=float, default=0.7, help='the rate of split train datasets')
@@ -46,8 +50,8 @@ def test_dust(logger):
     ]
     check_id = 7
     
-    # dust_dataset.get_anchor_size(Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20\annotation\kitti_imagecamera'))
-    dust_dataset.convert_pcd_to_bin(data_ids[check_id])
+    dust_dataset.get_anchor_size(Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20\annotation\kitti_imagecamera'))
+    # dust_dataset.convert_pcd_to_bin(data_ids[check_id])
     # lidar_a = dust_dataset.get_lidar_by_idx(data_ids[check_id])
     # lidar_b = dust_dataset.get_lidar_bin_by_idx(data_ids[check_id])
     # dust_dataset.visualize_point_cloud_by_idx(data_ids[check_id])
@@ -60,16 +64,16 @@ def test_dust(logger):
     rotate_angle = 56
     # dust_dataset.visualize_point_cloud_by_idx_and_angle(data_ids[check_id], rotate_angle)
     # dust_dataset.visualize_point_cloud_by_idx_and_angle_and_filter(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
-    # dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
+    dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     # dust_dataset.visualize_rotate_and_filter_point_cloud_in_image(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     
     point_cloud_range = np.array([5, -6.4, -4, 53.8, 0.8, 0])
-    dust_dataset.check_box_outside_range(
-        logger=logger,
-        label_path=Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20\annotation\kitti_imagecamera'), 
-        limit_range=point_cloud_range, 
-        rotate_angle=rotate_angle
-    )
+    # dust_dataset.check_box_outside_range(
+    #     logger=logger,
+    #     label_path=Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20\annotation\kitti_imagecamera'), 
+    #     limit_range=point_cloud_range, 
+    #     rotate_angle=rotate_angle
+    # )
     
     x_range = (2, 20)
     y_range = (-20, -5)
@@ -85,6 +89,12 @@ def main():
     
     if (args.test_data):
         test_dust(logger)
+    elif (args.kitti):
+        kittiDataset = KittiDataset(logger, args)
+        kittiDataset.count_labels()
+    elif (args.draw_bbox):
+        prepareDataset = PrepareDataset(logger, args)
+        prepareDataset.draw_3d_bbox_in_pcd_image(args)
     else:
         prepareDataset = PrepareDataset(logger, args)
         prepareDataset.process_raw_dataset(args)
