@@ -161,35 +161,27 @@ def visualize_3D_bbox_point_cloud(pcd, center, lwh, yaw, paint_color=False, line
     vis.add_geometry(line_set)
     _run_open3d_visualizer(vis)
     
-def visualize_3D_bbox_point_cloud_in_image(pcd, boxes, paint_color=False):
+def visualize_3D_bbox_point_cloud_in_image(save_path, pcd, boxes, paint_color=False):
 
-    vis = open3d.visualization.Visualizer()
-    vis.create_window()
-    pts = open3d.geometry.PointCloud()
-    pts.points = open3d.utility.Vector3dVector(pcd)
-    vis.add_geometry(pts)
+    vis = get_point_cloud_visualizer(pcd, paint_color)
 
-    colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    colors = [[1, 0, 0], [0, 1, 0], [0, 0, 100]] #red green blue / raw origin simfusion
     for i, box in enumerate(boxes):
-        line_color = colors[i]
+        line_color = colors[i%3]
         center = box[0, 0:3]
         lwh = box[0, 3:6]
         yaw = box[0, 6]
         line_set = _get_3d_bbox_lines_in_point_cloud(center, lwh, yaw, paint_color, line_color)
         vis.add_geometry(line_set)
 
-    # 设置相机位置和方向
-    vis.get_view_control().set_front([0, 0, 1])
-    vis.get_view_control().set_lookat([0, 0, 0])
-    vis.get_view_control().set_up([0, -1, 0])
-    vis.get_view_control().set_zoom(0.8)
+    _run_open3d_visualizer(vis)
+    
+    # vis.poll_events()
+    # vis.update_renderer()
+    # vis.capture_screen_image(str(save_path))
 
-    # 渲染场景并保存图片
-    image = vis.capture_screen_float_buffer(False)
-    open3d.io.write_image("output_image.png", image)
-
-    # 关闭场景
-    vis.destroy_window()
+    # # 关闭场景
+    # vis.destroy_window()
     
 def show_image(img):
     cv2.imshow('img', img)

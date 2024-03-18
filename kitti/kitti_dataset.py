@@ -1,7 +1,7 @@
 from . import kitti_calibration, kitti_object
 import os
 import numpy as np
-from dust.utils import dust_util
+from dust.utils import dust_util, common_util
 from pathlib import Path
 
 class KittiDataset(object):
@@ -36,6 +36,7 @@ class KittiDataset(object):
                 loc_lidar[:, 2] += obj.h / 2
                 boxes = np.concatenate([loc_lidar.reshape(-1), obj.lwh, np.asanyarray(obj.ry).reshape(-1)], axis=-1).reshape(1, -1)
                 corners = dust_util.boxes_to_corners_3d(boxes)
+                corners = corners[:, :4]
                 if all_corners is None:
                     all_corners = corners
                 else:
@@ -43,6 +44,6 @@ class KittiDataset(object):
                     
         all_box_z = all_corners[:, :, 2].flatten().tolist()
         
-        import torch
-        save_path = self.root_path / f'all_box_coor_z.pth'
-        torch.save(all_box_z, save_path)
+        save_path = self.root_path / f"kitti_box_z_coord.xlsx"
+        columns = ['z_coord']
+        common_util.convert_list_to_excel(save_path, all_box_z, columns)

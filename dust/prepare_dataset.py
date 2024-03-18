@@ -114,19 +114,13 @@ class PrepareDataset(object):
             boxes[:, 6] = dust_util.rect_to_yaw(float(boxes[:, 6]), self.rotate_angle)
         return dust_util.boxes_to_corners_3d(boxes)
 
-    def statistic_box_distribution(self, all_corners, path_suffix, draw_flag=False, torch_save=False):
+    def statistic_box_distribution(self, all_corners, path_suffix, draw_flag=False):
         all_box_x = all_corners[:, :, 0].flatten().tolist()
         all_box_y = all_corners[:, :, 1].flatten().tolist()
         all_box_z = all_corners[:, :, 2].flatten().tolist()
         
         save_path_root =  self.statistic_log_path / path_suffix
         save_path_root.mkdir(parents=True, exist_ok=True)
-        
-        if (torch_save):
-            import torch
-            save_path = save_path_root / f'all_box_coor.pth'
-            torch.save(all_box_z, save_path)
-            # a = torch.load(save_path)
 
         if (draw_flag):
             dust_util.draw_hist(data=all_box_x,
@@ -148,7 +142,7 @@ class PrepareDataset(object):
                                 save_path=save_path_root / f'z_coordinate_distribution.png'
                                 )
             
-        self.logger.info(f'save box distribution to {save_path_root}')
+            self.logger.info(f'save box distribution to {save_path_root}')
         
     def convert_kitti(self):
         self.logger.info(f"the path of datasets to convert pcd to bin: {self.raw_dataset_path}")
@@ -211,7 +205,7 @@ class PrepareDataset(object):
         val_split_path = save_split_path / 'val.txt'
         common_util.save_to_file_line_by_line(self.logger, val_list, val_split_path)
         
-    def statistic_label_list_box_distribution(self, label_list, save_path_suffix, draw_flag=False, torch_save=False):
+    def statistic_label_list_box_distribution(self, label_list, save_path_suffix, draw_flag=True):
         all_corners = None
         
         for label_name in label_list:
@@ -219,6 +213,9 @@ class PrepareDataset(object):
             
             for obj in objs:
                 corners = self.get_rect_3dbox(obj)
+
+                if (draw_flag == False):
+                    corners = corners[:, :4]
                 
                 # box_y = corners[:, :, 1].flatten().tolist()
                 # if any(elem > 2. for elem in box_y):
@@ -229,7 +226,13 @@ class PrepareDataset(object):
                 else:
                     all_corners = np.concatenate((all_corners, corners), axis=1)
                     
-        self.statistic_box_distribution(all_corners, save_path_suffix, torch_save=True)
+        if (draw_flag):
+            self.statistic_box_distribution(all_corners, save_path_suffix, draw_flag=False)
+        else:
+            all_box_z = all_corners[:, :, 2].flatten().tolist()
+            save_path = self.raw_dataset_path / f"dust_box_z_coord.xlsx"
+            columns = ['z_coord']
+            common_util.convert_list_to_excel(save_path, all_box_z, columns)
     
     def statistic_all_box_distribution(self):
         self.logger.info(f'start count all box distribution: {self.raw_dataset_path}')
@@ -244,7 +247,7 @@ class PrepareDataset(object):
             self.logger.error('no bin files')
             return
         
-        self.statistic_label_list_box_distribution(valid_list, 'data_box_dist', torch_save=True)
+        self.statistic_label_list_box_distribution(valid_list, '', draw_flag=False)
         
     def draw_3d_bbox_in_pcd_image(self, args):
         self.logger.info(f'start draw 3d bbox in pcd image: {self.raw_dataset_path}')
@@ -255,9 +258,16 @@ class PrepareDataset(object):
 
         import torch
         data_list = os.listdir(raw_data_root_path)
-        filter_id = ['1661512352_405903']
+        filter_id = ['1661512371_502501', '1661512384_401316', '1661512354_001345']
+        # filter_id = ['1661512352_405903']
         
+        # bbox = {}
+        # bbox['boxes'] = []
         for data_name in data_list:
+            data_id = data_name.replace('.pth', '')
+            if (data_id in filter_id):
+                continue
+
             raw_data_path = raw_data_root_path / data_name
             origin_data_path = origin_data_root_path / data_name
             simfusion_data_path = simfusion_data_root_path / data_name
@@ -265,10 +275,6 @@ class PrepareDataset(object):
             raw_data = torch.load(raw_data_path)
             origin_data = torch.load(origin_data_path)
             simfusion_data = torch.load(simfusion_data_path)
-        
-            data_id = data_name.replace('.pth', '')
-            if (data_id in filter_id):
-                continue
 
             bbox = {}
             bbox['id'] = data_id
@@ -276,8 +282,18 @@ class PrepareDataset(object):
             self.dust_dataset.draw_3d_bbox_in_rect_point_cloud_image_by_index(
                 rotate_angle=args.pcd_rect_rotate_angle,
                 x_range=(5, 53.8),
-                y_range=(-6.4, 0.8),
+                y_range=(-30, 20),
                 z_range=(-5, 0),
                 boxes=bbox
             )
-            break
+        #     if (data_id in filter_id):
+        #         bbox['boxes'].extend([raw_data, origin_data, simfusion_data])
+            
+        # bbox['id'] = '1661512384_401316'
+        # self.dust_dataset.draw_3d_bbox_in_rect_point_cloud_image_by_index(
+        #     rotate_angle=args.pcd_rect_rotate_angle,
+        #     x_range=(5, 53.8),
+        #     y_range=(-30, 20),
+        #     z_range=(-5, 0),
+        #     boxes=bbox
+        # )

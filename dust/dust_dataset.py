@@ -282,8 +282,10 @@ class DustDataset(object):
         lidar = self.get_lidar_by_idx(lidar_id)
         rotated_lidar = dust_util.rotate_lidar_along_z(lidar, rotate_angle)
         filtered_lidar = dust_util.filter_point_cloud(rotated_lidar, x_range, y_range, z_range)
+        save_path = Path(str(self.dataset_dir / 'box_img') + '/' + lidar_id + '.png')
 
         dust_util.visualize_3D_bbox_point_cloud_in_image(
+            save_path=save_path,
             pcd=filtered_lidar,
             boxes= boxes['boxes'],
             paint_color=paint_color

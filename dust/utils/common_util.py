@@ -1,4 +1,5 @@
 import logging
+# import pandas as pd
 
 def create_logger(log_file=None, log_level=logging.INFO):
     logger = logging.getLogger(__name__)
@@ -30,3 +31,8 @@ def delete_list_elem_obtain_other(a_list, b_list):
 
     # 转换回列表
     return list(result_set)
+
+def convert_list_to_excel(ptfile_path, list_data, columns):
+    # df = pd.DataFrame(list_data, columns=columns)
+    # df.to_excel(ptfile_path, index=False)
+    pass
