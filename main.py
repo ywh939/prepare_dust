@@ -35,8 +35,8 @@ def create_logger(args):
         log_file = log_dir / ('log_%s.txt' % datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
     return common_util.create_logger(log_file)
     
-def test_dust(logger):
-    data_path = Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20')
+def test_dust(logger, args):
+    data_path = Path(args.raw_dataset_path)
     dust_dataset = DustDataset(dataset_dir=data_path)
     dust_dataset
     
@@ -48,23 +48,24 @@ def test_dust(logger):
                 '1661512384_901863',
                 '1661512379_404696'
     ]
-    check_id = 7
+    check_id = 0
     
-    dust_dataset.get_anchor_size(Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20\annotation\kitti_imagecamera'))
+    # dust_dataset.get_anchor_size(Path(r'C:\Users\Y\Documents\dust_datasets\2022-08-26-19-12-20\annotation\kitti_imagecamera'))
     # dust_dataset.convert_pcd_to_bin(data_ids[check_id])
     # lidar_a = dust_dataset.get_lidar_by_idx(data_ids[check_id])
     # lidar_b = dust_dataset.get_lidar_bin_by_idx(data_ids[check_id])
     # dust_dataset.visualize_point_cloud_by_idx(data_ids[check_id])
     # dust_dataset.visualize_3d_bbox_center_in_image(data_ids[check_id])
     # dust_dataset.visualize_3d_bbox_in_image(data_ids[check_id])
-
-    x_range = (5, 60)
-    y_range = (-6.4, 0.8)
-    z_range = (-5, 0)
+    
+    x_range = (5, 500)
+    # y_range = (-6.4, 0.8)
+    y_range=(-50, 60)
+    z_range = (-5, 5)
     rotate_angle = 56
-    # dust_dataset.visualize_point_cloud_by_idx_and_angle(data_ids[check_id], rotate_angle)
+    dust_dataset.visualize_point_cloud_by_idx_and_angle(data_ids[check_id], rotate_angle)
     # dust_dataset.visualize_point_cloud_by_idx_and_angle_and_filter(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
-    dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
+    # dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     # dust_dataset.visualize_rotate_and_filter_point_cloud_in_image(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     
     point_cloud_range = np.array([5, -6.4, -4, 53.8, 0.8, 0])
@@ -91,13 +92,10 @@ def main():
     # dataset_manager.normalize_pcd_format_from_editor(logger)
     
     if (args.test_data):
-        test_dust(logger)
+        test_dust(logger, args)
     elif (args.kitti):
         kittiDataset = KittiDataset(logger, args)
         kittiDataset.count_labels()
-    elif (args.draw_bbox):
-        prepareDataset = PrepareDataset(logger, args)
-        prepareDataset.draw_3d_bbox_in_pcd_image(args)
     else:
         prepareDataset = PrepareDataset(logger, args)
         prepareDataset.process_raw_dataset(args)

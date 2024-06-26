@@ -44,6 +44,10 @@ class PrepareDataset(object):
 
         if (args.box_dist_statis):
             self.statistic_all_box_distribution()
+
+        if (args.draw_bbox):
+            self.draw_3d_bbox_in_pcd_image(args)
+            
             
     def check_label(self):
         self.logger.info(f"start to check label: {self.dust_dataset.label_dir}")
@@ -267,26 +271,26 @@ class PrepareDataset(object):
         for data_name in data_list:
             data_id = data_name.replace('.pth', '')
             if (data_id in filter_id):
-                continue
+                # continue
 
-            raw_data_path = raw_data_root_path / data_name
-            origin_data_path = origin_data_root_path / data_name
-            simfusion_data_path = simfusion_data_root_path / data_name
-            
-            raw_data = torch.load(raw_data_path)
-            origin_data = torch.load(origin_data_path)
-            simfusion_data = torch.load(simfusion_data_path)
+                raw_data_path = raw_data_root_path / data_name
+                origin_data_path = origin_data_root_path / data_name
+                simfusion_data_path = simfusion_data_root_path / data_name
+                
+                raw_data = torch.load(raw_data_path)
+                origin_data = torch.load(origin_data_path)
+                simfusion_data = torch.load(simfusion_data_path)
 
-            bbox = {}
-            bbox['id'] = data_id
-            bbox['boxes'] = [raw_data, origin_data, simfusion_data]
-            self.dust_dataset.draw_3d_bbox_in_rect_point_cloud_image_by_index(
-                rotate_angle=args.pcd_rect_rotate_angle,
-                x_range=(5, 53.8),
-                y_range=(-30, 20),
-                z_range=(-5, 0),
-                boxes=bbox
-            )
+                bbox = {}
+                bbox['id'] = data_id
+                bbox['boxes'] = [raw_data, origin_data, simfusion_data]
+                self.dust_dataset.draw_3d_bbox_in_rect_point_cloud_image_by_index(
+                    rotate_angle=args.pcd_rect_rotate_angle,
+                    x_range=(5, 53.8),
+                    y_range=(-30, 20),
+                    z_range=(-5, 0),
+                    boxes=bbox
+                )
         #     if (data_id in filter_id):
         #         bbox['boxes'].extend([raw_data, origin_data, simfusion_data])
             
