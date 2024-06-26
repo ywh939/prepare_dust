@@ -258,8 +258,9 @@ class PrepareDataset(object):
 
         import torch
         data_list = os.listdir(raw_data_root_path)
-        filter_id = ['1661512371_502501', '1661512384_401316', '1661512354_001345']
+        # filter_id = ['1661512371_502501', '1661512384_401316', '1661512354_001345', '1661512372_401672']
         # filter_id = ['1661512352_405903']
+        filter_id = ['1661512372_401672']
         
         # bbox = {}
         # bbox['boxes'] = []

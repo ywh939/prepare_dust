@@ -86,6 +86,9 @@ def test_dust(logger):
 def main():
     args = parse_config()
     logger = create_logger(args)
+
+    # from taizhong import dataset_manager
+    # dataset_manager.normalize_pcd_format_from_editor(logger)
     
     if (args.test_data):
         test_dust(logger)
