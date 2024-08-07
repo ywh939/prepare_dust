@@ -27,9 +27,9 @@
                 "D:\\detection_v2.0\\detection\\training",
                 // "/root/datasets/kitti_logoNet/training",
                 "--module_root_path",
-                "C:\\Users\\windows\\Documents\\iRepository\\LoGoNet\\detection",
-                "--train_split_rate",
-                "0.7",
+                "/root/LoGoNet-py37/detection",
+                // "--train_split_rate",
+                // "0.7",
                 "--pcd_rect_rotate_angle",
                 "56",
             ]
