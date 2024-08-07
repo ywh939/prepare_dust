@@ -190,7 +190,8 @@ def show_image(img):
 def show_and_save_image(img, save_path):
     cv2.imshow('img', img)
     cv2.waitKey(0)
-    cv2.imwrite(str(save_path), img)
+    if (save_path is not None):
+        cv2.imwrite(str(save_path), img)
     
 def draw_point_in_image(img, pcd_image, circle_radius=1, save_path=None):
     for i in range(pcd_image.shape[0]):

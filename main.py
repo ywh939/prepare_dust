@@ -8,12 +8,14 @@ from dust.dust_dataset import DustDataset
 from dust.utils import common_util
 from dust.prepare_dataset import PrepareDataset
 from kitti.kitti_dataset import KittiDataset
+from mine.mine_dataset import MineDataset
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
     parser.add_argument('--save_log', action='store_true', default=False, help='whether to save log file')
     parser.add_argument('--test_data', action='store_true', default=False, help='test something for datasets')
     parser.add_argument('--kitti', action='store_true', default=False, help='do work for kitti datasets')
+    parser.add_argument('--mine', action='store_true', default=False, help='do work for mine datasets')
     parser.add_argument('--draw_bbox', action='store_true', default=False, help='draw bbox in pcd image')
     parser.add_argument('--check_label', action='store_true', default=False, help='whether to check label')
     parser.add_argument('--convert_datasets', action='store_true', default=False, help='convert datasets from pcd to bin')
@@ -55,8 +57,8 @@ def test_dust(logger, args):
     # lidar_a = dust_dataset.get_lidar_by_idx(data_ids[check_id])
     # lidar_b = dust_dataset.get_lidar_bin_by_idx(data_ids[check_id])
     # dust_dataset.visualize_point_cloud_by_idx(data_ids[check_id])
-    # dust_dataset.visualize_3d_bbox_center_in_image(data_ids[check_id])
-    # dust_dataset.visualize_3d_bbox_in_image(data_ids[check_id])
+    dust_dataset.visualize_3d_bbox_center_in_image(data_ids[check_id])
+    dust_dataset.visualize_3d_bbox_in_image(data_ids[check_id])
     
     x_range = (5, 500)
     # y_range = (-6.4, 0.8)
@@ -65,7 +67,7 @@ def test_dust(logger, args):
     rotate_angle = 56
     dust_dataset.visualize_point_cloud_by_idx_and_angle(data_ids[check_id], rotate_angle)
     # dust_dataset.visualize_point_cloud_by_idx_and_angle_and_filter(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
-    # dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
+    dust_dataset.draw_3d_bbox_in_rect_point_cloud_by_index(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     # dust_dataset.visualize_rotate_and_filter_point_cloud_in_image(data_ids[check_id], rotate_angle, x_range, y_range, z_range)
     
     point_cloud_range = np.array([5, -6.4, -4, 53.8, 0.8, 0])
@@ -82,7 +84,7 @@ def test_dust(logger, args):
     # dust_dataset.visualize_point_cloud_by_idx_and_filter(data_ids[check_id], x_range, y_range, z_range)
     # dust_dataset.draw_3d_bbox_in_filter_point_cloud_by_index(data_ids[check_id], x_range, y_range, z_range)
     # dust_dataset.visualize_filter_point_cloud_in_fov(data_ids[check_id], x_range, y_range, z_range)
-    # dust_dataset.visualize_filter_point_cloud_in_image(data_ids[check_id], x_range, y_range, z_range)
+    dust_dataset.visualize_filter_point_cloud_in_image(data_ids[check_id], x_range, y_range, z_range)
     
 def main():
     args = parse_config()
@@ -93,6 +95,9 @@ def main():
     elif (args.kitti):
         kittiDataset = KittiDataset(logger, args)
         kittiDataset.count_labels()
+    elif (args.mine):
+        mineDataset = MineDataset(logger, args)
+        mineDataset.count_labels()
     else:
         prepareDataset = PrepareDataset(logger, args)
         prepareDataset.process_raw_dataset(args)

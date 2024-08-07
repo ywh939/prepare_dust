@@ -30,9 +30,9 @@ class Calibration(object):
         
         pcd_camera = pcd @ self.lidar2camera_rotation_matrix.T + self.lidar2camera_transition_vector.T
         
-        v2c = np.hstack((self.lidar2camera_rotation_matrix, self.lidar2camera_transition_vector))
-        lidar2cam_quantic = np.vstack((v2c, np.array([0, 0, 0, 1], dtype=np.float32).reshape(1, 4)))
-        pcd_camera2 = np.matmul(np.hstack((pcd, np.ones((pcd.shape[0], 1), dtype=np.float32))), lidar2cam_quantic.T)
+        # v2c = np.hstack((self.lidar2camera_rotation_matrix, self.lidar2camera_transition_vector))
+        # lidar2cam_quantic = np.vstack((v2c, np.array([0, 0, 0, 1], dtype=np.float32).reshape(1, 4)))
+        # pcd_camera2 = np.matmul(np.hstack((pcd, np.ones((pcd.shape[0], 1), dtype=np.float32))), lidar2cam_quantic.T)
         
         return pcd_camera
     
