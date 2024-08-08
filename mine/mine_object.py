@@ -30,6 +30,8 @@ class Object3d(object):
         self.lwh = np.hstack((self.l, self.w, self.h))
 
         self.loc = np.array((float(label[12]), float(label[10]), float(label[11])), dtype=np.float32)
+        # self.loc[2] -= self.h / 2
+        
         self.ry = float(label[13])
         self.rz = float(label[14])
         self.rx = float(label[15])

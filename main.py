@@ -100,7 +100,7 @@ def main():
         kittiDataset.count_labels()
     elif (args.mine):
         mineDataset = MineDataset(logger, args)
-        mineDataset.count_labels()
+        mineDataset.process_raw_dataset(args)
     else:
         prepareDataset = PrepareDataset(logger, args)
         prepareDataset.process_raw_dataset(args)
