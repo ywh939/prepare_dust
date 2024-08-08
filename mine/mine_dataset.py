@@ -84,16 +84,17 @@ class MineDataset(object):
 
     def process_raw_dataset(self, args):
         
-        self.count_labels()
-        # self.convert_kitti()
-        # self.set_split_datasest()
-
-    def count_labels(self):
-        label_list = os.listdir(self.label_dir)
-        
         select_type = set([1, 2, 3])
+        sample_file = 'select_sample.txt'
         # select_type = set([2])
-        select_sample = []
+        self.count_labels(select_type)
+        # self.convert_kitti()
+        self.set_split_datasest(sample_file)
+        # self.screen_out_selected_type_to_new_label(select_type)
+
+    def count_labels(self, select_type, sample_file=None):
+        
+        select_sample = set([])
         count_type_dict = {}
         all_corners = None
         sum_z = 0
@@ -102,6 +103,7 @@ class MineDataset(object):
         sum_h = 0
         select_cnt = 0
 
+        label_list = os.listdir(self.label_dir)
         for label_name in label_list:
             objs = self.get_label(label_name)
 
@@ -113,7 +115,6 @@ class MineDataset(object):
             # continue
             # self.visualize_point_cloud_in_image(img, lidar, calib)
 
-            has_select_type = False
             for obj in objs:
 
                 # self.draw_3d_bbox_in_point_cloud_by_index(lidar, obj)
@@ -126,7 +127,7 @@ class MineDataset(object):
                     count_type_dict[obj.cls_type] = 1
 
                 if obj.cls_id in select_type:
-                    has_select_type = True
+                    select_sample.add(label_name)
 
                     boxes = np.concatenate([obj.loc, obj.lwh, np.asanyarray(obj.rz).reshape(-1)], axis=-1).reshape(1, -1)
                     corners = dust_util.boxes_to_corners_3d(boxes)
@@ -142,8 +143,9 @@ class MineDataset(object):
                     sum_h += obj.h
                     select_cnt += 1
                                 
-            if has_select_type:
-                select_sample.append(label_name)
+                # else:
+                    # print(label_name)
+
 
         xl = all_corners[:, :, 0].flatten().tolist()
         yl = all_corners[:, :, 1].flatten().tolist()
@@ -153,12 +155,13 @@ class MineDataset(object):
               max z: {max(zl)}, max z: {min(zl)}")
 
         print(count_type_dict)
-        # print(len(select_sample))
-        print(sum_z / select_cnt, sum_l / select_cnt, sum_w / select_cnt, sum_h / select_cnt, sum_z / select_cnt - sum_h / select_cnt / 2)
+        print(len(select_sample))
+        print(sum_l / select_cnt, sum_w / select_cnt, sum_h / select_cnt, sum_z / select_cnt - sum_h / select_cnt / 2)
 
-        # with open('select_sample.txt', 'w') as file: 
-        #     for item in select_sample:
-        #         file.write(f'{item}\n')
+        if sample_file:
+            with open(sample_file, 'w') as file: 
+                for item in select_sample:
+                    file.write(f'{item}\n') 
 
     def convert_kitti(self):
         self.logger.info(f"the path of datasets to convert pcd to bin: {self.root_path}")
@@ -184,10 +187,10 @@ class MineDataset(object):
         
         self.logger.info(f'exist {exist_bin_file_count} bin files, converted {converted_count} files')
 
-    def set_split_datasest(self):
-        self.logger.info(f'start split datasets: {self.root_path}')
+    def set_split_datasest(self, sample_file):
+        self.logger.info(f'start split datasets: {sample_file}')
         
-        with open(self.root_path / 'select_train_sample.txt', 'r') as f:
+        with open(sample_file, 'r') as f:
             file_list = [x.strip() for x in f.readlines()]
 
         data_list = [s.replace('.txt', '') for s in file_list]
@@ -204,3 +207,20 @@ class MineDataset(object):
         
         val_split_path = save_split_path / 'val.txt'
         common_util.save_to_file_line_by_line(self.logger, val_list, val_split_path)
+
+    def screen_out_selected_type_to_new_label(self, select_type):
+
+        with open('select_sample.txt', 'r') as f: 
+            lines = f.readlines()
+
+        save_select_label_path = self.root_path / 'select_label'
+        for line in lines:
+            label_name = line.strip()
+            objs = self.get_label(label_name)
+            select_obj = []
+            for obj in objs:
+                if obj.cls_id in select_type:
+                    select_obj.append(obj)
+            
+            if select_obj: 
+                obj.set_objects_to_label_file(select_obj, save_select_label_path / label_name)

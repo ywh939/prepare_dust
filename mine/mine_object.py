@@ -7,9 +7,8 @@ def get_objects_from_label(label_file):
     objects = [Object3d(line) for line in lines]
     return objects
 
-
 def cls_type_to_id(cls_type):
-    type_to_id = {'Mining-Truck': 1, 'Civilian-Vehicles': 2, 'water_car': 3}
+    type_to_id = {'Mining-Truck': 1, 'Wide-Body-Truck': 2, 'water_car': 3}
     if cls_type not in type_to_id.keys():
         return -1
     return type_to_id[cls_type]
@@ -59,3 +58,16 @@ class Object3d(object):
                      % (self.cls_type, self.truncation, self.occlusion, self.box2d, self.l, self.w, self.h,
                         self.loc, self.ry, self.rz, self.rx)
         return print_str
+    
+    def to_label_str(self):
+        label_str = f"{self.cls_type} {self.truncation} {self.occlusion} {self.box2d[0]} "\
+                    f"{self.box2d[1]} {self.box2d[2]} {self.box2d[3]} {self.l} {self.w} {self.h} "\
+                    f"{self.loc[1]} {self.loc[2]} {self.loc[0]} {self.ry} {self.rz} {self.rx}"
+        return label_str
+
+    @staticmethod
+    def set_objects_to_label_file(objs, label_path):
+        with open(label_path, 'w') as f:
+            for obj in objs:
+                f.write(obj.to_label_str())
+                f.write("\n")
