@@ -1,8 +1,10 @@
-from . import mine_calibration, mine_object
 import os
 import numpy as np
-from dust.utils import dust_util, common_util
 from pathlib import Path
+
+from . import mine_calibration, mine_object
+from dust.utils import dust_util, common_util
+from utils import path_handler
 
 class MineDataset(object):
     def __init__(self, logger, args):
@@ -84,13 +86,18 @@ class MineDataset(object):
 
     def process_raw_dataset(self, args):
         
-        select_type = set([1, 2, 3])
+        select_type = set([1])
         sample_file = 'select_sample.txt'
         # select_type = set([2])
-        self.count_labels(select_type)
+
+        self.count_labels(select_type, sample_file)
+        # self.count_labels(select_type)
+        # self.screen_out_selected_type_to_new_label(select_type, sample_file)
+
         # self.convert_kitti()
-        self.set_split_datasest(sample_file)
-        # self.screen_out_selected_type_to_new_label(select_type)
+        # self.set_split_datasest(sample_file)
+
+        # self.rename_label_file('1')
 
     def count_labels(self, select_type, sample_file=None):
         
@@ -208,9 +215,9 @@ class MineDataset(object):
         val_split_path = save_split_path / 'val.txt'
         common_util.save_to_file_line_by_line(self.logger, val_list, val_split_path)
 
-    def screen_out_selected_type_to_new_label(self, select_type):
+    def screen_out_selected_type_to_new_label(self, select_type, sample_file):
 
-        with open('select_sample.txt', 'r') as f: 
+        with open(sample_file, 'r') as f: 
             lines = f.readlines()
 
         save_select_label_path = self.root_path / 'select_label'
@@ -224,3 +231,17 @@ class MineDataset(object):
             
             if select_obj: 
                 obj.set_objects_to_label_file(select_obj, save_select_label_path / label_name)
+
+    def rename_label_file(self, start_with_char):
+        idx_list = os.listdir("D:\\detection_v2.0\\detection\\testing\\stereo_calib")
+        for name in idx_list:
+            file_path = Path(name)
+
+            new_path = self.lidar_dir / f"{file_path.stem}.bin"
+            path_handler.rename_file(new_path, start_with_char)
+            new_path = self.img_dir / f"{file_path.stem}.png"
+            path_handler.rename_file(new_path, start_with_char)
+            new_path = self.calib_dir / f"{file_path.stem}.txt"
+            path_handler.rename_file(new_path, start_with_char)
+            new_path = self.label_dir / f"{file_path.stem}.txt"
+            path_handler.rename_file(new_path, start_with_char)

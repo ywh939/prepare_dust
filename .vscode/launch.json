@@ -24,6 +24,7 @@
                 // "--box_dist_statis",
                 "--raw_dataset_path",
                 // "D:\\2022-08-26-19-12-20",
+                // "D:\\detection_v2.0\\detection\\testing",
                 "D:\\detection_v2.0\\detection\\training",
                 // "/root/datasets/kitti_logoNet/training",
                 "--module_root_path",
